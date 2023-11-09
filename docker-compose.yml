@@ -1,0 +1,100 @@
+version: '3.9'
+services:
+  mongodb:
+    container_name: mongodb
+    image: 'mongo:latest'
+    restart: unless-stopped
+    healthcheck:
+      test: [ 'CMD', 'mongodb', '--eval', "db.adminCommand('ping')" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: rootuser
+      MONGO_INITDB_ROOT_PASSWORD: rootpass
+      MONGO_INITDB_DATABASE: microservices
+      TZ: 'Europe/Istanbul'
+    ports:
+      - '27017:27017'
+    networks:
+      - meganet
+    volumes:
+      - 'mongo_db:/data/db'
+      - 'db_config:/data/configdb'
+    stdin_open: true
+    tty: true
+
+  mongo-express:
+    image: mongo-express
+    container_name: mexpress
+    restart: always
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=rootuser
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=rootpass
+      - ME_CONFIG_MONGODB_URL=mongodb://rootuser:rootpass@mongodb:27017/
+      - ME_CONFIG_BASICAUTH_USERNAME=mexpress
+      - ME_CONFIG_BASICAUTH_PASSWORD=mexpress
+    depends_on:
+      - mongodb
+    ports:
+      - "8084:8081"
+    healthcheck:
+      test: curl --fail http://localhost:8081 || exit 1
+      interval: 60s
+      retries: 5
+      start_period: 20s
+      timeout: 10s
+
+  appointments:
+    container_name: appointments
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: apps/appointments/Dockerfile
+      target: development
+    command: npm run start:dev appointments
+    env_file:
+      - ./apps/appointments/.env
+    depends_on:
+      - mongodb
+    ports:
+      - '3000:3000'
+    networks:
+      - meganet
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+
+  auth:
+    container_name: auth
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: apps/auth/Dockerfile
+      target: development
+    command: npm run start:dev auth
+    env_file:
+      - ./apps/auth/.env
+    depends_on:
+      - mongodb
+    #    environment:
+    #      MONGODB_URI: 'mongodb://rootuser:rootpass@mongodb:2710/microservices?authSource=admin'
+    #      TZ: "Europe/Istanbul"
+    ports:
+      - '3001:3001'
+    networks:
+      - meganet
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+
+volumes:
+  mongo_db:
+  db_config:
+networks:
+  meganet:
+    external: true

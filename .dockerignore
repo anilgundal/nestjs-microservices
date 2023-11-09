@@ -1,0 +1,14 @@
+node_modules
+npm-debug.log
+dist
+README.md
+.eslintrc.js
+.prettierrc
+.gitignore
+.git
+.yarn.lock
+yarn-error.log
+pnpm-lock.yaml
+.idea
+docker-compose.yml
+Dockerfile

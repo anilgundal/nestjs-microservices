@@ -1,0 +1,15 @@
+Dockerfile
+node_modules
+npm-debug.log
+dist
+README.md
+.dockerignore
+.eslintrc.js
+.prettierrc
+.gitignore
+.git
+.yarn.lock
+yarn-error.log
+.idea
+Dockerfile
+Dockerfile2
