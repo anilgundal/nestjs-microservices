@@ -1,4 +1,13 @@
 version: '3.9'
+
+volumes:
+  mongo_db:
+  db_config:
+networks:
+  meganet:
+    external: true
+
+
 services:
   mongodb:
     container_name: mongodb
@@ -23,7 +32,6 @@ services:
       - 'db_config:/data/configdb'
     stdin_open: true
     tty: true
-
   mongo-express:
     image: mongo-express
     container_name: mexpress
@@ -44,6 +52,9 @@ services:
       retries: 5
       start_period: 20s
       timeout: 10s
+    networks:
+      - meganet
+
 
   appointments:
     container_name: appointments
@@ -55,8 +66,6 @@ services:
     command: npm run start:dev appointments
     env_file:
       - ./apps/appointments/.env
-    depends_on:
-      - mongodb
     ports:
       - '3000:3000'
     networks:
@@ -66,7 +75,6 @@ services:
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
-
   auth:
     container_name: auth
     restart: unless-stopped
@@ -78,7 +86,7 @@ services:
     env_file:
       - ./apps/auth/.env
     depends_on:
-      - mongodb
+      - appointments
     #    environment:
     #      MONGODB_URI: 'mongodb://rootuser:rootpass@mongodb:2710/microservices?authSource=admin'
     #      TZ: "Europe/Istanbul"
@@ -91,10 +99,3 @@ services:
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
-
-volumes:
-  mongo_db:
-  db_config:
-networks:
-  meganet:
-    external: true
